@@ -7,3 +7,5 @@
 .env
 taskManagmentCofc.Server/appsettings.Development.json
 *.user
+managment1/
+*.rar
