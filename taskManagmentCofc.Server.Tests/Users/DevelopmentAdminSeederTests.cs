@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using taskManagmentCofc.Server.Data;
+using taskManagmentCofc.Server.Entities;
 using taskManagmentCofc.Server.Enums;
 using taskManagmentCofc.Server.Security;
 using taskManagmentCofc.Server.Services.Implementations;
@@ -41,6 +42,32 @@ public sealed class DevelopmentAdminSeederTests
         Assert.Equal(UserStatus.Active, admin.Status);
         Assert.Equal("ADMIN@EXAMPLE.COM", admin.NormalizedEmail);
         Assert.NotEqual("SeedPassword123", admin.PasswordHash);
+    }
+
+    [Fact]
+    public async Task ProductionBootstrap_DoesNotCreateAdminWhenDatabaseAlreadyContainsUsers()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        await using var db = CreateDbContext(connection);
+        await db.Database.EnsureCreatedAsync();
+        db.Users.Add(new User
+        {
+            Id = Guid.NewGuid(),
+            FullName = "Existing Employee",
+            Email = "employee@example.com",
+            NormalizedEmail = "EMPLOYEE@EXAMPLE.COM",
+            PasswordHash = "existing-password-hash",
+            Role = UserRole.Employee,
+            Status = UserStatus.Active
+        });
+        await db.SaveChangesAsync();
+
+        var seeder = CreateSeeder(db, "SeedPassword123");
+        await seeder.SeedAsync(requireEmptyDatabase: true);
+
+        var user = Assert.Single(await db.Users.AsNoTracking().ToListAsync());
+        Assert.Equal(UserRole.Employee, user.Role);
     }
 
     private static AppDbContext CreateDbContext(SqliteConnection connection)

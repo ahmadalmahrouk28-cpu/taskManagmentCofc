@@ -28,9 +28,10 @@ if (hasWebRoot)
     app.MapStaticAssets();
 }
 
+await app.SeedConfiguredAdminAsync();
+
 if (app.Environment.IsDevelopment())
 {
-    await app.SeedDevelopmentAdminAsync();
 
     app.MapOpenApi();
     app.UseSwaggerUI(options =>

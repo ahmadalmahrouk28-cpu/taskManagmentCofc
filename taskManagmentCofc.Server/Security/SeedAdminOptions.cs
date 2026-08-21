@@ -9,4 +9,6 @@ public sealed class SeedAdminOptions
     public string Email { get; set; } = "admin@example.com";
 
     public string? Password { get; set; }
+
+    public bool EnableProductionBootstrap { get; set; }
 }

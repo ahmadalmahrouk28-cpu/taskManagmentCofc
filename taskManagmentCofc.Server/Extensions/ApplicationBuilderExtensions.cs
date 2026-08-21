@@ -15,13 +15,19 @@ public static class ApplicationBuilderExtensions
         await dbContext.Database.MigrateAsync(cancellationToken);
     }
 
-    public static async Task SeedDevelopmentAdminAsync(
+    public static async Task SeedConfiguredAdminAsync(
         this WebApplication app,
         CancellationToken cancellationToken = default)
     {
+        var useProductionBootstrap = app.Configuration.GetValue<bool>("SeedAdmin:EnableProductionBootstrap");
+        if (!app.Environment.IsDevelopment() && !useProductionBootstrap)
+        {
+            return;
+        }
+
         await using var scope = app.Services.CreateAsyncScope();
         var seeder = scope.ServiceProvider.GetRequiredService<DevelopmentAdminSeeder>();
-        await seeder.SeedAsync(cancellationToken);
+        await seeder.SeedAsync(useProductionBootstrap, cancellationToken);
     }
 
     public static IApplicationBuilder UseApiErrorHandling(this IApplicationBuilder app)

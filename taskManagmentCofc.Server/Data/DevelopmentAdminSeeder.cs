@@ -14,7 +14,9 @@ public sealed class DevelopmentAdminSeeder(
     IOptions<SeedAdminOptions> options,
     ILogger<DevelopmentAdminSeeder> logger)
 {
-    public async Task SeedAsync(CancellationToken cancellationToken = default)
+    public async Task SeedAsync(
+        bool requireEmptyDatabase = false,
+        CancellationToken cancellationToken = default)
     {
         var seedOptions = options.Value;
 
@@ -38,6 +40,13 @@ public sealed class DevelopmentAdminSeeder(
 
         var email = seedOptions.Email.Trim();
         var normalizedEmail = email.ToUpperInvariant();
+
+        if (requireEmptyDatabase && await dbContext.Users.AsNoTracking().AnyAsync(cancellationToken))
+        {
+            logger.LogWarning("Production admin bootstrap was skipped because the database is not empty.");
+            return;
+        }
+
         var accountExists = await dbContext.Users
             .AsNoTracking()
             .AnyAsync(user => user.NormalizedEmail == normalizedEmail, cancellationToken);
@@ -61,6 +70,13 @@ public sealed class DevelopmentAdminSeeder(
 
         dbContext.Users.Add(admin);
         await dbContext.SaveChangesAsync(cancellationToken);
+        if (requireEmptyDatabase)
+        {
+            // يمنع الشرط إنشاء مسؤول إنتاجي إلا لقاعدة فارغة وبموافقة صريحة من الإعدادات الآمنة.
+            logger.LogWarning("Production initial admin was created. Remove SeedAdmin bootstrap settings and restart the application.");
+            return;
+        }
+
         logger.LogInformation("Development admin seed account was created.");
     }
 }

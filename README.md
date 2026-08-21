@@ -225,6 +225,7 @@ dotnet ef database update --project taskManagmentCofc.Server --startup-project t
 | `SeedAdmin__FullName` | اسم مسؤول Development الأول |
 | `SeedAdmin__Email` | بريد مسؤول Development الأول |
 | `SeedAdmin__Password` | كلمة مرور مسؤول Development؛ لا توجد قيمة افتراضية |
+| `SeedAdmin__EnableProductionBootstrap` | يفعّل إنشاء أول Admin في Production مرة واحدة فقط لقاعدة بيانات فارغة؛ يعاد إلى `false` مباشرة بعد الإنشاء |
 | `Smtp__Host` | خادم SMTP الاختياري |
 | `Smtp__Port` | منفذ SMTP، والافتراضي 587 |
 | `Smtp__Username` | اسم مستخدم SMTP |
