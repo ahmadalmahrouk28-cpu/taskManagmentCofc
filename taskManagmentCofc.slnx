@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="taskmanagmentcofc.client/taskmanagmentcofc.client.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="taskManagmentCofc.Server/taskManagmentCofc.Server.csproj" />
+  <Project Path="taskManagmentCofc.Server.Tests/taskManagmentCofc.Server.Tests.csproj" />
+</Solution>

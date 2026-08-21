@@ -1,0 +1,9 @@
+.vs/
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/.angular/
+.env
+taskManagmentCofc.Server/appsettings.Development.json
+*.user

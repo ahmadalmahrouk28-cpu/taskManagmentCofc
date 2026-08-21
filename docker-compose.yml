@@ -1,0 +1,71 @@
+name: task-management-cofc
+
+services:
+  database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Express
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in the environment or an ignored .env file}
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" -b -o /dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - task-management-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: taskManagmentCofc.Server/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: 8080
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      Database__ApplyMigrationsOnStartup: "true"
+      HttpsRedirection__Enabled: "false"
+      ConnectionStrings__DefaultConnection: Server=database,1433;Database=${SQLSERVER_DATABASE:-TaskManagementCofc};User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True
+      Jwt__Key: ${Jwt__Key:?Set Jwt__Key to at least 32 bytes in the environment or an ignored .env file}
+      Jwt__Issuer: ${Jwt__Issuer:-taskManagmentCofc.Server}
+      Jwt__Audience: ${Jwt__Audience:-taskmanagmentcofc.client}
+      Jwt__ExpiresMinutes: ${Jwt__ExpiresMinutes:-60}
+      Smtp__Host: ${Smtp__Host:-}
+      Smtp__Port: ${Smtp__Port:-587}
+      Smtp__Username: ${Smtp__Username:-}
+      Smtp__Password: ${Smtp__Password:-}
+      Smtp__FromEmail: ${Smtp__FromEmail:-}
+      Smtp__FromName: ${Smtp__FromName:-Task Management}
+      Smtp__EnableSsl: ${Smtp__EnableSsl:-true}
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - task-management-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: taskmanagmentcofc.client/Dockerfile
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - task-management-network
+
+volumes:
+  sqlserver-data:
+
+networks:
+  task-management-network:
+    driver: bridge

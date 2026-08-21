@@ -1,0 +1,6 @@
+@taskManagmentCofc.Server_HostAddress = https://localhost:7145
+
+GET {{taskManagmentCofc.Server_HostAddress}}/openapi/v1.json
+Accept: application/json
+
+###
