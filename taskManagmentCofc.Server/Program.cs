@@ -25,6 +25,7 @@ var hasWebRoot = Directory.Exists(app.Environment.WebRootPath);
 if (hasWebRoot)
 {
     app.UseDefaultFiles();
+    app.UseStaticFiles();
     app.MapStaticAssets();
 }
 
