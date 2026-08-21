@@ -100,9 +100,96 @@ dotnet user-secrets set "Jwt:Key" "replace-with-a-development-key-of-at-least-32
 
 بعد إعداد قاعدة البيانات يمكن تشغيل Backend وAngular كل منهما في terminal مستقل، أو فتح `taskManagmentCofc.slnx` في Visual Studio وتشغيل profile الخادم `https`. تكامل SpaProxy الحالي يشغّل أمر Angular الموجود في `package.json` دون الحاجة إلى تغيير ملفات Docker أو استخدام CORS واسع.
 
+## التشغيل المحلي خطوة بخطوة
+
+نفّذ الخطوات التالية بالترتيب من PowerShell.
+
+### 1. الحصول على المشروع وتثبيت الحزم
+
+```powershell
+git clone https://github.com/ahmadalmahrouk28-cpu/taskManagmentCofc.git
+Set-Location taskManagmentCofc
+dotnet restore taskManagmentCofc.slnx
+npm --prefix taskmanagmentcofc.client ci
+```
+
+### 2. إعداد مفتاح JWT محليًا
+
+أنشئ قيمة عشوائية طويلة، ثم خزّنها في User Secrets. لا تضعها في Angular أو في Git:
+
+```powershell
+$jwtKey = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(48))
+dotnet user-secrets set "Jwt:Key" $jwtKey --project taskManagmentCofc.Server
+```
+
+### 3. إعداد اتصال قاعدة البيانات المحلية
+
+أنشئ الملف المحلي التالي إذا لم يكن موجودًا؛ هذا الملف مستثنى من Git:
+
+`taskManagmentCofc.Server/appsettings.Development.json`
+
+ضع فيه اتصال LocalDB التالي، أو استبدله باتصال SQL Server Express المناسب لديك:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=TaskManagementCofc;Trusted_Connection=True;MultipleActiveResultSets=True;TrustServerCertificate=True"
+  }
+}
+```
+
+### 4. إنشاء قاعدة البيانات
+
+```powershell
+dotnet ef database update --project taskManagmentCofc.Server --startup-project taskManagmentCofc.Server
+```
+
+### 5. إنشاء حساب أدمن للتطوير
+
+اختر كلمة مرور قوية خاصة بك، ثم خزّن بيانات الحساب محليًا. الحساب لا يُنشأ إلا في بيئة Development:
+
+```powershell
+dotnet user-secrets set "SeedAdmin:FullName" "System Admin" --project taskManagmentCofc.Server
+dotnet user-secrets set "SeedAdmin:Email" "admin@example.local" --project taskManagmentCofc.Server
+dotnet user-secrets set "SeedAdmin:Password" "ضع-هنا-كلمة-مرور-قوية-تحتوي-حرفًا-ورقمًا" --project taskManagmentCofc.Server
+```
+
+### 6. تشغيل الـBackend
+
+افتح Terminal أول من root المشروع:
+
+```powershell
+dotnet run --project taskManagmentCofc.Server --launch-profile https
+```
+
+بعد التشغيل:
+
+- API وSwagger: `https://localhost:7145/swagger`
+- API HTTP: `http://localhost:5056`
+
+### 7. تشغيل واجهة Angular
+
+افتح Terminal ثاني من root المشروع:
+
+```powershell
+npm --prefix taskmanagmentcofc.client start
+```
+
+ثم افتح:
+
+```text
+https://localhost:51089
+```
+
+توجّه Angular جميع طلبات `/api` تلقائيًا إلى الـBackend المحلي عبر Proxy. سجّل الدخول باستخدام البريد وكلمة المرور اللذين اخترتهما في الخطوة 5.
+
+### بديل Visual Studio
+
+افتح `taskManagmentCofc.slnx` ثم شغّل Profile باسم `https`. سيشغّل SpaProxy واجهة Angular تلقائيًا. تحتاج فقط إلى تنفيذ الخطوات 1 إلى 5 مرة واحدة أولًا.
+
 ## Database Setup
 
-إعداد Development الحالي يستخدم LocalDB من:
+إعداد Development المحلي يستخدم LocalDB من الملف غير المرفوع إلى Git:
 
 `taskManagmentCofc.Server/appsettings.Development.json`
 
